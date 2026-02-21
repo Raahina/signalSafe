@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SafeSignal AI - SOC Dashboard</title>
+
+<style>
+:root {
+    --deep: #860000;
+    --alert: #C40002;
+    --highlight: #DE3C62;
+    --accent: #ED7BC3;
+    --soft: #EBAEE9;
+    --panel: rgba(255,255,255,0.06);
+}
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #860000, #C40002);
+    color: white;
+}
+
+/* HEADER */
+header {
+    padding: 20px 30px;
+    background: rgba(0,0,0,0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.status-indicator {
+    color: var(--soft);
+    font-size: 14px;
+}
+
+/* MAIN LAYOUT */
+.main {
+    display: flex;
+    padding: 20px;
+    gap: 20px;
+}
+
+/* CAMERA TILE */
+.camera-tile {
+    width: 70%;
+    background: var(--panel);
+    border-radius: 15px;
+    padding: 15px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 15px rgba(237, 123, 195, 0.3);
+    position: relative;
+    transition: 0.3s;
+    margin-bottom: 20px;
+}
+
+.camera-tile.alert-active {
+    border: 2px solid red;
+    box-shadow: 0 0 35px red;
+}
+
+/* Blinking red light */
+.camera-tile.alert-active::after {
+    content: "";
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 12px;
+    height: 12px;
+    background: red;
+    border-radius: 50%;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0% { opacity: 1; box-shadow: 0 0 10px red; }
+    50% { opacity: 0.3; box-shadow: 0 0 20px red; }
+    100% { opacity: 1; box-shadow: 0 0 10px red; }
+}
+
+.camera-header {
+    font-size: 14px;
+    margin-bottom: 10px;
+    color: var(--soft);
+}
+
+video {
+    width: 100%;
+    border-radius: 10px;
+    background: black;
+}
+
+/* ALERT PANEL */
+.alert-panel {
+    width: 30%;
+    background: var(--panel);
+    padding: 20px;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 20px rgba(237, 123, 195, 0.5);
+}
+
+.alert-card {
+    background: linear-gradient(135deg, var(--alert), var(--highlight));
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.alert-card h2 {
+    margin-top: 0;
+}
+
+/* DETAILS */
+.details p {
+    margin: 6px 0;
+}
+
+.time-display {
+    font-size: 16px;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.time-display:hover {
+    color: black;
+    background: var(--soft);
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+/* BUTTONS */
+.buttons {
+    margin-top: 15px;
+}
+
+.buttons button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.false-btn {
+    background: var(--soft);
+    color: #860000;
+}
+
+.escalate-btn {
+    background: black;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+}
+
+.buttons button:hover {
+    opacity: 0.85;
+}
+
+/* FALSE ALERTS PANEL */
+.false-panel {
+    width: 30%;
+    background: rgba(0,0,0,0.2);
+    padding: 20px;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 20px rgba(237,123,195,0.5);
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.false-panel h2 {
+    margin-top: 0;
+    font-size: 18px;
+    color: var(--soft);
+}
+
+.false-panel ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.false-panel li {
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    font-size: 14px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>SafeSignal AI - Security Operations Center</h1>
+</header>
+
+<div class="main">
+
+    <!-- SINGLE CAMERA -->
+    <div class="camera-tile" id="cam1_test">
+        <div class="camera-header">Student Union - Cam #1</div>
+        <video autoplay muted playsinline></video>
+    </div>
+
+    <!-- ALERT PANEL -->
+    <div class="alert-panel" id="alertPanel" style="display:none;">
+        <div class="alert-card">
+            <h2>⚠ HIGH PRIORITY ALERT</h2>
+
+            <div class="details">
+                <p><strong>Location:</strong> Student Union</p>
+                <p><strong>Camera:</strong> #1</p>
+                <p><strong>Time:</strong> 
+                    <span class="time-display" id="liveTime"></span>
+                </p>
+            </div>
+
+            <div class="buttons">
+                <button class="false-btn" id="falseBtn">Mark False Positive</button>
+                <button class="escalate-btn" id="escalateBtn">Escalate to Campus Safety</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FALSE ALERTS PANEL -->
+    <div class="false-panel">
+        <h2>False Alerts</h2>
+        <ul id="falseAlerts"></ul>
+    </div>
+
+</div>
+<script>
+let alertActive = false;
+let cooldown = false;
+const video = document.querySelector("#cam1_test video");
+
+let consecutiveDetections = 0;
+const alertPanel = document.getElementById("alertPanel");
+const camTile = document.getElementById("cam1_test");
+// Real-time clock
+function updateTime() {
+    const now = new Date();
+    document.getElementById("liveTime").textContent = now.toLocaleTimeString();
+}
+setInterval(updateTime, 1000);
+updateTime();
+
+// Start webcam
+navigator.mediaDevices.getUserMedia({ video: true })
+.then(stream => { video.srcObject = stream; })
+.catch(err => { console.error("Camera access denied:", err); });
+
+// Create hidden canvas for frame capture
+const canvas = document.createElement("canvas");
+const ctx = canvas.getContext("2d");
+
+// Send frame to backend every 800ms
+setInterval(() => {
+
+    if (!video.videoWidth) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    ctx.drawImage(video, 0, 0);
+
+    const dataURL = canvas.toDataURL("image/jpeg");
+
+    fetch("/api/detect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: dataURL })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        console.log("Distress prob:", data.prob);
+
+        if (data.distress) {
+    consecutiveDetections++;
+} else {
+    consecutiveDetections = 0;
+}
+
+if (consecutiveDetections >= 1 && !alertActive && !cooldown) {
+    camTile.classList.add("alert-active");
+    alertPanel.style.display = "block";
+    alertActive = true;
+}
+
+    })
+    .catch(err => console.error("API error:", err));
+
+}, 800);
+
+
+// Escalate button
+document.getElementById("escalateBtn").addEventListener("click", () => {
+    if(confirm("Are you sure you want to escalate to Campus Safety?")){
+        if(confirm("Click OK to call Campus Safety.")){
+            window.location.href = "tel:2065499610"; 
+        }
+    }
+});
+
+// False positive tracking
+const falseBtn = document.getElementById("falseBtn");
+const falseList = document.getElementById("falseAlerts");
+
+falseBtn.addEventListener("click", () => {
+
+    const user = prompt("Enter your full name to confirm false positive:");
+
+    if (!user || user.trim() === "") {
+        alert("Name required to clear alert.");
+        return;
+    }
+
+    const now = new Date();
+
+    const li = document.createElement("li");
+    li.textContent = `${now.toLocaleString()} | Student Union | Camera #1 | Cleared by: ${user}`;
+    falseList.appendChild(li);
+
+    // Reset system
+camTile.classList.remove("alert-active");
+alertPanel.style.display = "none";
+consecutiveDetections = 0;
+alertActive = false;
+
+// Start cooldown to prevent instant retrigger
+cooldown = true;
+setTimeout(() => {
+    cooldown = false;
+}, 3000); // 5 seconds
+});
+</script>
+
+</body>
+</html>
