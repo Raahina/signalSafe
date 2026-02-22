@@ -4,7 +4,8 @@ signalSafe is a real-time AI-powered security monitoring system that detects pot
 
 In large campuses and public spaces, silent distress signals can go unnoticed. signalSafe provides: Automated gesture-based distress detection, Real-time monitoring dashboard, Structured incident logging, Reduced response time.
 
-##Tech Stack 
+Tech Stack 
+
 Backend: 
 Python 
 Flask 
@@ -12,12 +13,10 @@ OpenCV
 MediaPipe 
 Scikit-learn 
 Joblib 
-
 Frontend: 
 HTML 
 CSS 
 JavaScript 
-
 Machine Learning: 
 Custom trained classifier (distress_classifier.joblib) 
 Training data stored in X_hand.npy and y_hand.npy
